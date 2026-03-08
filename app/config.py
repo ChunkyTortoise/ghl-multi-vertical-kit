@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Webhook
     ghl_webhook_secret: Optional[str] = None
 
+    # Redis (optional — in-memory fallback if not set)
+    redis_url: str = ""
+
     # App
     environment: str = "development"
     log_level: str = "INFO"

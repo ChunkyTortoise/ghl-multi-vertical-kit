@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 
 from app.models import DemoRequest, DemoResponse
 from app.services import bot_engine, config_loader
+from app.services.conversation_store import (
+    append_message,
+    clear_history,
+    get_history,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +25,10 @@ async def demo_chat(req: DemoRequest) -> DemoResponse:
     """Simulate a bot conversation for any loaded vertical.
 
     No GHL keys required — just an Anthropic API key.
+
+    If ``contact_id`` is provided in ``contact_info``, conversation history
+    is persisted across requests (Redis or in-memory fallback).  Otherwise
+    the ``conversation_history`` list from the request body is used as-is.
     """
     try:
         vertical = config_loader.load_vertical(req.vertical)
@@ -32,12 +41,28 @@ async def demo_chat(req: DemoRequest) -> DemoResponse:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+    contact_id: Optional[str] = req.contact_info.get("contact_id")
+
+    # If a contact_id is present, load persisted history
+    if contact_id:
+        history = await get_history(contact_id)
+        # Merge any explicitly-passed history (first call may seed it)
+        if not history and req.conversation_history:
+            history = list(req.conversation_history)
+    else:
+        history = list(req.conversation_history)
+
     result = await bot_engine.generate_response(
         vertical=vertical,
         user_message=req.user_message,
-        conversation_history=req.conversation_history,
+        conversation_history=history,
         contact_info=req.contact_info,
     )
+
+    # Persist the new turn
+    if contact_id:
+        await append_message(contact_id, "user", req.user_message)
+        await append_message(contact_id, "assistant", result["response"])
 
     return DemoResponse(
         vertical=vertical.name,
@@ -46,6 +71,13 @@ async def demo_chat(req: DemoRequest) -> DemoResponse:
         qualification_progress=result.get("qualification_progress", {}),
         model=result.get("model", ""),
     )
+
+
+@router.delete("/demo/history/{contact_id}")
+async def delete_history(contact_id: str) -> dict:
+    """Clear persisted conversation history for a contact."""
+    await clear_history(contact_id)
+    return {"status": "cleared", "contact_id": contact_id}
 
 
 @router.get("/verticals", response_model=List[str])
