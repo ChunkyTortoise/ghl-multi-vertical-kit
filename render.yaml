@@ -18,3 +18,13 @@ services:
         value: real_estate
       - key: ENVIRONMENT
         value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ghl-bot-redis
+          property: connectionString
+
+  - type: redis
+    name: ghl-bot-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

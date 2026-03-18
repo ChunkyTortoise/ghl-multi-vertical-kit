@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 
 from app.models import DemoRequest, DemoResponse
 from app.services import bot_engine, config_loader
@@ -18,6 +20,42 @@ from app.services.conversation_store import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["demo"])
+
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+
+@router.get("/demo/ui", include_in_schema=False)
+async def demo_ui() -> FileResponse:
+    """Serve the interactive demo HTML page."""
+    html_path = _STATIC_DIR / "demo.html"
+    return FileResponse(html_path, media_type="text/html")
+
+
+@router.get("/demo/config/{vertical_name}")
+async def demo_config(vertical_name: str) -> Dict[str, Any]:
+    """Return config and rendered system prompt for a vertical."""
+    try:
+        vertical = config_loader.load_vertical(vertical_name)
+    except FileNotFoundError as exc:
+        available = config_loader.list_verticals()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Vertical '{vertical_name}' not found. Available: {available}",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return {
+        "name": vertical.name,
+        "bot_name": vertical.persona.name,
+        "tone": vertical.persona.tone,
+        "greeting": vertical.persona.greeting,
+        "qualification_questions": vertical.qualification_questions,
+        "disqualification_criteria": vertical.disqualification_criteria,
+        "booking_enabled": vertical.booking_enabled,
+        "response_templates": vertical.response_templates,
+        "system_prompt_rendered": bot_engine.build_system_prompt(vertical),
+    }
 
 
 @router.post("/demo", response_model=DemoResponse)

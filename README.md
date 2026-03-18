@@ -1,11 +1,25 @@
-![Tests](https://img.shields.io/badge/tests-87%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-105%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet-blueviolet)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 # GHL Multi-Vertical AI Bot Kit
 
 A configurable GoHighLevel AI bot framework that supports any business vertical. Swap industries by changing a YAML config file -- real estate, home services, legal intake, or your own custom vertical. No code changes required. Built on FastAPI and Claude, with a GHL webhook handler that receives leads and replies via SMS automatically.
+
+## Interactive Demo UI
+
+Open `http://localhost:8000/demo/ui` after starting the server to get a browser-based chat interface:
+
+- **Vertical selector** — 3 clickable cards (Real Estate, Home Services, Legal) with bot name and tone
+- **Live chat panel** — SMS-style bubbles, qualification progress bar, typing indicator
+- **Template trigger pills** — test "stop", "unsubscribe", "emergency" without typing
+- **How It Works panel** — shows qualification questions, template triggers, and the rendered system prompt
+- No GHL keys needed — only `ANTHROPIC_API_KEY`
+
+![Vertical Selector](docs/screenshots/vertical-selector.png)
+![Chat Demo](docs/screenshots/chat-demo.png)
 
 ## Quick Demo
 
@@ -202,6 +216,28 @@ Returns list of available vertical names (from `verticals/*.yaml`).
 ["home_services", "legal", "real_estate"]
 ```
 
+### `GET /demo/ui`
+
+Serves the interactive HTML demo page. Open in a browser — no auth required.
+
+### `GET /demo/config/{vertical}`
+
+Returns the full config and rendered system prompt for a vertical. Useful for inspecting how YAML templates expand at runtime.
+
+```json
+{
+  "name": "real_estate",
+  "bot_name": "Alex",
+  "tone": "professional, warm, and direct",
+  "greeting": "Hey! I'm Alex — are you looking to buy or sell a home?",
+  "qualification_questions": ["Are you looking to buy or sell?", "..."],
+  "disqualification_criteria": ["Budget is under $50,000", "..."],
+  "booking_enabled": true,
+  "response_templates": {"stop": "No problem — I'll stop messaging you. Best of luck!"},
+  "system_prompt_rendered": "You are Alex, a direct and friendly real estate assistant..."
+}
+```
+
 ### `POST /demo`
 
 Simulate a bot conversation without GHL. Only requires `ANTHROPIC_API_KEY`.
@@ -271,6 +307,7 @@ The service includes a `/health` check path for Render's health monitoring.
 | `GHL_CALENDAR_ID` | No | -- | GHL calendar ID for booking |
 | `GHL_WEBHOOK_SECRET` | No | -- | HMAC secret for webhook signature verification |
 | `CLAUDE_MODEL` | No | `claude-sonnet-4-5-20250514` | Claude model override |
+| `REDIS_URL` | No | -- | Redis connection URL. Falls back to in-memory store if unset |
 | `ENVIRONMENT` | No | `development` | `development` or `production` |
 | `LOG_LEVEL` | No | `INFO` | Logging level |
 
@@ -284,16 +321,19 @@ ghl-multi-vertical-kit/
 │   ├── models.py             # Request/response schemas + VerticalConfig
 │   ├── routes/
 │   │   ├── webhook.py        # GHL webhook handler
-│   │   └── demo.py           # /demo + /verticals endpoints
-│   └── services/
-│       ├── bot_engine.py     # Core bot logic (prompt building, qualification, Claude)
-│       ├── ghl_client.py     # GHL API client (contacts, messaging, calendar)
-│       └── config_loader.py  # YAML loader + validator + cache
+│   │   └── demo.py           # /demo + /demo/ui + /demo/config + /verticals endpoints
+│   ├── services/
+│   │   ├── bot_engine.py     # Core bot logic (prompt building, qualification, Claude)
+│   │   ├── ghl_client.py     # GHL API client (contacts, messaging, calendar)
+│   │   └── config_loader.py  # YAML loader + validator + cache
+│   └── static/
+│       └── demo.html         # Self-contained browser demo UI
 ├── verticals/
 │   ├── real_estate.yaml      # Buyer/seller qualification
 │   ├── home_services.yaml    # HVAC/plumbing/electrical intake
 │   └── legal.yaml            # Client intake with disclaimer
-├── tests/                    # 87 tests
+├── docs/screenshots/         # Demo UI screenshots
+├── tests/                    # 105 tests
 ├── .env.example
 ├── docker-compose.yml
 ├── render.yaml

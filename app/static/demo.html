@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GHL Multi-Vertical AI Bot Kit — Demo</title>
+  <style>
+    :root {
+      --accent: #3B82F6;
+      --bg: #f8fafc;
+      --chat-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --card-color: #3B82F6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    header p { color: #94a3b8; font-size: 1.05rem; }
+
+    /* ── Layout ────────────────────────────────── */
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .section-heading { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
+
+    /* ── Error banner ──────────────────────────── */
+    #error-banner {
+      background: #fee2e2; color: #991b1b; padding: 0.75rem 1.25rem;
+      border-radius: 8px; margin-bottom: 1rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.875rem;
+    }
+    #error-banner.hidden { display: none; }
+    #error-banner button { background: none; border: none; cursor: pointer; color: #991b1b; font-size: 1.2rem; line-height: 1; }
+
+    /* ── Vertical selector ─────────────────────── */
+    #vertical-selector { margin-bottom: 2rem; }
+    .vertical-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+    .vertical-card {
+      background: #fff; border: 2px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      border-top: 4px solid var(--card-color);
+    }
+    .vertical-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    .vertical-card.active { border-color: var(--card-color); background: #f8fafc; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .card-name { font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem; }
+    .card-bot { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.2rem; }
+    .card-tone { color: var(--text-muted); font-size: 0.8rem; font-style: italic; }
+
+    /* ── Chat panel ────────────────────────────── */
+    #chat-panel {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; display: flex; flex-direction: column; height: 580px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    #chat-panel.hidden { display: none !important; }
+
+    /* Cold-start banner */
+    .cold-start-banner {
+      background: #eff6ff; color: #1e40af; padding: 0.5rem 1.25rem;
+      font-size: 0.8rem; text-align: center; border-bottom: 1px solid #bfdbfe; display: none;
+    }
+
+    /* Chat header */
+    .chat-header {
+      background: var(--accent); color: #fff;
+      padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .bot-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0;
+    }
+    .chat-header-info { flex: 1; min-width: 0; }
+    .chat-header-info .bot-name { font-weight: 600; font-size: 0.95rem; }
+    .vertical-badge {
+      font-size: 0.7rem; background: rgba(255,255,255,0.2);
+      padding: 1px 8px; border-radius: 999px; display: inline-block; margin-top: 2px;
+    }
+    .reset-btn {
+      background: rgba(255,255,255,0.15); border: none; color: #fff;
+      padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+      transition: background 0.15s; flex-shrink: 0;
+    }
+    .reset-btn:hover { background: rgba(255,255,255,0.28); }
+
+    /* Progress bar */
+    .progress-container {
+      padding: 0.5rem 1.25rem; background: #fff; border-bottom: 1px solid var(--border);
+    }
+    .progress-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .progress-segments { display: flex; gap: 3px; }
+    .progress-segment {
+      flex: 1; height: 5px; border-radius: 3px; background: var(--border);
+      transition: background 0.3s ease;
+    }
+    .progress-segment.filled { background: var(--accent); }
+
+    /* Messages area */
+    .messages {
+      flex: 1; overflow-y: auto; padding: 1rem 1.25rem;
+      display: flex; flex-direction: column; gap: 0.625rem;
+    }
+    .message { display: flex; align-items: flex-end; gap: 0.45rem; max-width: 80%; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .message.bot { align-self: flex-start; }
+    .message-avatar {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; flex-shrink: 0;
+    }
+    .bubble {
+      padding: 0.55rem 0.85rem; border-radius: 16px;
+      font-size: 0.875rem; line-height: 1.45; word-break: break-word;
+    }
+    .message.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+    .message.bot .bubble { background: #f1f5f9; color: var(--text); border-bottom-left-radius: 4px; }
+    .template-badge {
+      font-size: 0.68rem; background: #fef3c7; color: #92400e;
+      padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 3px;
+    }
+
+    /* Typing indicator */
+    .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 8px 12px; }
+    .typing-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+    /* Template trigger pills */
+    .trigger-pills {
+      padding: 0.5rem 1.25rem; display: flex; flex-wrap: wrap; gap: 0.4rem;
+      border-top: 1px solid var(--border); background: #fff;
+    }
+    .trigger-pill {
+      background: #f1f5f9; border: 1px solid var(--border); color: var(--text-muted);
+      padding: 3px 11px; border-radius: 999px; font-size: 0.78rem;
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .trigger-pill:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Input bar */
+    .input-bar {
+      display: flex; gap: 0.5rem; padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border); background: #fff;
+    }
+    .input-bar input {
+      flex: 1; border: 1px solid var(--border); border-radius: 24px;
+      padding: 0.6rem 1rem; font-size: 0.875rem; outline: none;
+      transition: border-color 0.15s; background: #fff;
+    }
+    .input-bar input:focus { border-color: var(--accent); }
+    .input-bar input:disabled { background: #f8fafc; cursor: not-allowed; }
+    .send-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 50%;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+    }
+    .send-btn:hover:not(:disabled) { background: #2563eb; }
+    .send-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+    /* ── How It Works ──────────────────────────── */
+    #how-it-works {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      margin-top: 1.5rem; overflow: hidden;
+    }
+    #how-it-works summary {
+      padding: 1rem 1.25rem; cursor: pointer; font-weight: 600;
+      user-select: none; list-style: none; display: flex; justify-content: space-between; align-items: center;
+    }
+    #how-it-works summary::-webkit-details-marker { display: none; }
+    .hiw-body { padding: 0 1.25rem 1.25rem; }
+    .hiw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .hiw-section h3 {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem;
+    }
+    .hiw-list { list-style: none; }
+    .hiw-list li {
+      padding: 0.35rem 0; font-size: 0.85rem;
+      border-bottom: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: flex-start;
+    }
+    .hiw-list li:last-child { border-bottom: none; }
+    .hiw-num { color: var(--accent); font-weight: 600; min-width: 20px; flex-shrink: 0; }
+    .prompt-preview {
+      background: #0f172a; color: #94a3b8; font-family: 'Menlo', 'Courier New', monospace;
+      font-size: 0.76rem; padding: 1rem; border-radius: 8px;
+      white-space: pre-wrap; max-height: 180px; overflow-y: auto; line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+    .hiw-full-row { grid-column: 1 / -1; }
+
+    /* ── Responsive ────────────────────────────── */
+    @media (max-width: 768px) {
+      header { padding: 2rem 1rem 1.75rem; }
+      header h1 { font-size: 1.5rem; }
+      main { padding: 1rem; }
+      .vertical-grid { grid-template-columns: 1fr; }
+      #chat-panel { height: 520px; }
+      .hiw-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.25rem; }
+      .chat-header { padding: 0.75rem 1rem; }
+      .messages { padding: 0.75rem 1rem; }
+      .input-bar { padding: 0.625rem 0.875rem; }
+      .trigger-pills { padding: 0.4rem 0.875rem; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>GHL Multi-Vertical AI Bot Kit</h1>
+  <p>YAML-driven lead qualification — swap verticals, not code</p>
+</header>
+
+<main>
+  <!-- Error banner -->
+  <div id="error-banner" class="hidden">
+    <span id="error-text"></span>
+    <button onclick="dismissError()" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <!-- Vertical selector -->
+  <section id="vertical-selector">
+    <p class="section-heading">Choose a vertical to demo</p>
+    <div class="vertical-grid" id="vertical-grid">
+      <!-- Cards injected by JS -->
+    </div>
+  </section>
+
+  <!-- Chat panel -->
+  <section id="chat-panel" class="hidden">
+    <div class="cold-start-banner" id="cold-start-banner">
+      &#9749; Waking up server&hellip; first response may take ~30s on free tier
+    </div>
+
+    <div class="chat-header" id="chat-header">
+      <div class="bot-avatar" id="bot-avatar"></div>
+      <div class="chat-header-info">
+        <div class="bot-name" id="bot-name"></div>
+        <span class="vertical-badge" id="vertical-badge"></span>
+      </div>
+      <button class="reset-btn" onclick="resetChat()">&#8635; Reset</button>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-label" id="progress-label">Qualification: 0 / 0 questions answered</div>
+      <div class="progress-segments" id="progress-segments"></div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="trigger-pills" id="trigger-pills"></div>
+
+    <div class="input-bar">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Type a message&hellip;"
+        onkeydown="handleKeyDown(event)"
+        autocomplete="off"
+      />
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <details id="how-it-works">
+    <summary>
+      <span>&#9881;&#65039; How It Works</span>
+      <span id="hiw-arrow">&#9660;</span>
+    </summary>
+    <div class="hiw-body">
+      <div class="hiw-grid">
+        <div class="hiw-section">
+          <h3>Qualification Questions</h3>
+          <ul class="hiw-list" id="hiw-questions">
+            <li><span class="hiw-num">—</span><span>Select a vertical to see questions</span></li>
+          </ul>
+        </div>
+        <div class="hiw-section">
+          <h3>Template Triggers (skip Claude)</h3>
+          <ul class="hiw-list" id="hiw-triggers">
+            <li><span class="hiw-num">—</span><span>Select a vertical to see triggers</span></li>
+          </ul>
+        </div>
+        <div class="hiw-section hiw-full-row">
+          <h3>System Prompt (rendered)</h3>
+          <pre class="prompt-preview" id="hiw-prompt">Select a vertical above to see the rendered system prompt.</pre>
+        </div>
+      </div>
+    </div>
+  </details>
+</main>
+
+<script>
+  // ─── State ────────────────────────────────────────────────────────────────
+  const state = {
+    currentVertical: null,
+    contactId: null,
+    verticalConfig: null,
+    loading: false,
+    qualAnswered: 0,
+    firstRequest: true,
+  };
+
+  // ─── Vertical metadata ────────────────────────────────────────────────────
+  const VERTICAL_META = {
+    real_estate:   { icon: '&#127968;', color: '#3B82F6', label: 'Real Estate' },
+    home_services: { icon: '&#128295;', color: '#F59E0B', label: 'Home Services' },
+    legal:         { icon: '&#9878;&#65039;', color: '#8B5CF6', label: 'Legal' },
+  };
+
+  // ─── Init ─────────────────────────────────────────────────────────────────
+  async function init() {
+    let verticals = Object.keys(VERTICAL_META);
+    try {
+      const res = await fetch('/verticals');
+      if (res.ok) verticals = await res.json();
+    } catch (_) { /* use defaults */ }
+    renderVerticalCards(verticals);
+  }
+
+  function renderVerticalCards(verticals) {
+    const grid = document.getElementById('vertical-grid');
+    grid.innerHTML = '';
+    verticals.forEach(v => {
+      const meta = VERTICAL_META[v] || { icon: '&#129302;', color: '#64748b', label: v };
+      const card = document.createElement('div');
+      card.className = 'vertical-card';
+      card.style.setProperty('--card-color', meta.color);
+      card.style.borderTopColor = meta.color;
+      card.dataset.vertical = v;
+      card.innerHTML = `
+        <div class="card-icon">${meta.icon}</div>
+        <div class="card-name">${meta.label}</div>
+        <div class="card-bot" id="card-bot-${v}">Loading&hellip;</div>
+        <div class="card-tone" id="card-tone-${v}"></div>
+      `;
+      card.onclick = () => selectVertical(v);
+      grid.appendChild(card);
+
+      // Pre-fetch to populate card details
+      fetchConfig(v).then(cfg => {
+        if (!cfg) return;
+        const botEl = document.getElementById(`card-bot-${v}`);
+        const toneEl = document.getElementById(`card-tone-${v}`);
+        if (botEl) botEl.textContent = `Bot: ${cfg.bot_name}`;
+        if (toneEl) toneEl.textContent = cfg.tone;
+      });
+    });
+  }
+
+  async function fetchConfig(vertical) {
+    try {
+      const res = await fetch(`/demo/config/${vertical}`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (_) { return null; }
+  }
+
+  // ─── Vertical selection ───────────────────────────────────────────────────
+  async function selectVertical(vertical) {
+    document.querySelectorAll('.vertical-card').forEach(c => {
+      c.classList.toggle('active', c.dataset.vertical === vertical);
+    });
+
+    const meta = VERTICAL_META[vertical] || { color: '#64748b', label: vertical };
+    const cfg = await fetchConfig(vertical);
+    if (!cfg) { showError(`Could not load config for "${vertical}"`); return; }
+
+    state.currentVertical = vertical;
+    state.contactId = crypto.randomUUID();
+    state.verticalConfig = cfg;
+    state.qualAnswered = 0;
+    state.firstRequest = true;
+
+    // Update CSS accent
+    document.documentElement.style.setProperty('--accent', meta.color);
+
+    // Update chat header
+    document.getElementById('bot-avatar').textContent = cfg.bot_name[0];
+    document.getElementById('bot-name').textContent = cfg.bot_name;
+    document.getElementById('vertical-badge').textContent = meta.label;
+    document.querySelector('.chat-header').style.background = meta.color;
+
+    // Progress bar
+    renderProgressBar((cfg.qualification_questions || []).length, 0);
+
+    // Template pills
+    renderTriggerPills(cfg.response_templates || {});
+
+    // How It Works panel
+    updateHowItWorks(cfg);
+
+    // Show chat, clear messages
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('chat-panel').classList.remove('hidden');
+    addBotMessage(cfg.greeting, false);
+
+    document.getElementById('chat-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => document.getElementById('user-input').focus(), 350);
+  }
+
+  // ─── Progress bar ─────────────────────────────────────────────────────────
+  function renderProgressBar(total, answered) {
+    const segs = document.getElementById('progress-segments');
+    const label = document.getElementById('progress-label');
+    segs.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const seg = document.createElement('div');
+      seg.className = `progress-segment${i < answered ? ' filled' : ''}`;
+      segs.appendChild(seg);
+    }
+    label.textContent = `Qualification: ${answered} / ${total} questions answered`;
+  }
+
+  // ─── Trigger pills ────────────────────────────────────────────────────────
+  function renderTriggerPills(templates) {
+    const container = document.getElementById('trigger-pills');
+    container.innerHTML = '';
+    Object.keys(templates).forEach(trigger => {
+      const pill = document.createElement('button');
+      pill.className = 'trigger-pill';
+      pill.textContent = trigger;
+      pill.title = `Sends: "${templates[trigger]}"`;
+      pill.onclick = () => sendTrigger(trigger);
+      container.appendChild(pill);
+    });
+  }
+
+  // ─── How It Works ─────────────────────────────────────────────────────────
+  function updateHowItWorks(cfg) {
+    const ql = document.getElementById('hiw-questions');
+    ql.innerHTML = (cfg.qualification_questions || []).map((q, i) =>
+      `<li><span class="hiw-num">${i + 1}.</span><span>${escHtml(q)}</span></li>`
+    ).join('') || '<li><span class="hiw-num">—</span><span>None defined</span></li>';
+
+    const tl = document.getElementById('hiw-triggers');
+    const entries = Object.entries(cfg.response_templates || {});
+    tl.innerHTML = entries.map(([k, v]) =>
+      `<li><span class="hiw-num">&#8594;</span><span><strong>${escHtml(k)}</strong>: &ldquo;${escHtml(v)}&rdquo;</span></li>`
+    ).join('') || '<li><span class="hiw-num">—</span><span>None defined</span></li>';
+
+    document.getElementById('hiw-prompt').textContent = cfg.system_prompt_rendered || 'N/A';
+  }
+
+  // ─── Messaging ────────────────────────────────────────────────────────────
+  function addBotMessage(text, isTemplate) {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message bot';
+    const initial = state.verticalConfig ? state.verticalConfig.bot_name[0] : '?';
+    div.innerHTML = `
+      <div class="message-avatar" style="background:var(--accent)">${escHtml(initial)}</div>
+      <div>
+        <div class="bubble">${escHtml(text)}</div>
+        ${isTemplate ? '<span class="template-badge">template response</span>' : ''}
+      </div>
+    `;
+    container.appendChild(div);
+    scrollToBottom();
+  }
+
+  function addUserMessage(text) {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message user';
+    div.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
+    container.appendChild(div);
+    scrollToBottom();
+  }
+
+  function showTyping() {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message bot';
+    div.id = 'typing-indicator';
+    const initial = state.verticalConfig ? state.verticalConfig.bot_name[0] : '?';
+    div.innerHTML = `
+      <div class="message-avatar" style="background:var(--accent)">${escHtml(initial)}</div>
+      <div class="bubble typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    `;
+    container.appendChild(div);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  // ─── Sending messages ─────────────────────────────────────────────────────
+  async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text || state.loading || !state.currentVertical) return;
+    input.value = '';
+    addUserMessage(text);
+    await callApi(text);
+  }
+
+  async function sendTrigger(trigger) {
+    if (state.loading) return;
+    addUserMessage(trigger);
+    await callApi(trigger);
+  }
+
+  async function callApi(text) {
+    setLoading(true);
+    if (state.firstRequest) {
+      document.getElementById('cold-start-banner').style.display = 'block';
+    }
+    showTyping();
+
+    try {
+      const res = await fetch('/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vertical: state.currentVertical,
+          user_message: text,
+          conversation_history: [],
+          contact_info: { contact_id: state.contactId },
+        }),
+      });
+
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try { detail = (await res.json()).detail || detail; } catch (_) {}
+        throw new Error(detail);
+      }
+
+      const data = await res.json();
+      hideTyping();
+      state.firstRequest = false;
+      document.getElementById('cold-start-banner').style.display = 'none';
+
+      const isTemplate = data.model === 'template';
+      addBotMessage(data.response, isTemplate);
+
+      // Update qualification progress (never regress)
+      if (data.qualification_progress) {
+        const prog = data.qualification_progress;
+        const answered = typeof prog.answered === 'number'
+          ? prog.answered
+          : Object.values(prog).filter(v => v === true || v === 'answered').length;
+        const total = (state.verticalConfig.qualification_questions || []).length;
+        state.qualAnswered = Math.max(state.qualAnswered, answered);
+        renderProgressBar(total, state.qualAnswered);
+      }
+    } catch (e) {
+      hideTyping();
+      document.getElementById('cold-start-banner').style.display = 'none';
+      showError(`Error: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ─── Reset ────────────────────────────────────────────────────────────────
+  async function resetChat() {
+    if (!state.contactId) return;
+    try {
+      await fetch(`/demo/history/${state.contactId}`, { method: 'DELETE' });
+    } catch (_) { /* best-effort */ }
+
+    state.contactId = crypto.randomUUID();
+    state.qualAnswered = 0;
+    state.firstRequest = true;
+
+    document.getElementById('messages').innerHTML = '';
+    const total = (state.verticalConfig?.qualification_questions || []).length;
+    renderProgressBar(total, 0);
+
+    if (state.verticalConfig?.greeting) {
+      addBotMessage(state.verticalConfig.greeting, false);
+    }
+  }
+
+  // ─── UI helpers ───────────────────────────────────────────────────────────
+  function setLoading(loading) {
+    state.loading = loading;
+    document.getElementById('send-btn').disabled = loading;
+    document.getElementById('user-input').disabled = loading;
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById('messages');
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function showError(msg) {
+    document.getElementById('error-text').textContent = msg;
+    document.getElementById('error-banner').classList.remove('hidden');
+  }
+
+  function dismissError() {
+    document.getElementById('error-banner').classList.add('hidden');
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+      .replace(/\n/g, '<br>');
+  }
+
+  // How It Works toggle arrow
+  document.getElementById('how-it-works').addEventListener('toggle', function () {
+    document.getElementById('hiw-arrow').innerHTML = this.open ? '&#9650;' : '&#9660;';
+  });
+
+  init();
+</script>
+</body>
+</html>
