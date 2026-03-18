@@ -28,3 +28,4 @@ services:
     name: ghl-bot-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
