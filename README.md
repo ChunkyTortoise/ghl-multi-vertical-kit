@@ -1,8 +1,8 @@
-![Tests](https://img.shields.io/badge/tests-105%20passing-brightgreen)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Tests](https://img.shields.io/badge/tests-105%20passing-84CC16)
+![Python](https://img.shields.io/badge/python-3.11%2B-84CC16)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet-blueviolet)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-MIT-84CC16)
 
 # GHL Multi-Vertical AI Bot Kit
 
@@ -89,6 +89,14 @@ curl -X POST http://localhost:8000/demo \
                                                        |  GHL Client |
                                                        | (sends SMS) |
                                                        +-------------+
+```
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#84CC16', 'primaryBorderColor': '#65A30D', 'primaryTextColor': '#E2E8F0', 'lineColor': '#84CC16'}}}%%
+graph LR
+    A[GHL Webhook] --> B[Vertical Router]
+    B --> C[Claude Agent]
+    C --> D[GHL CRM]
 ```
 
 ## Verticals Comparison
