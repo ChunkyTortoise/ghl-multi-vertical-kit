@@ -122,7 +122,7 @@ graph LR
 
 ```bash
 # Clone and install
-git clone <your-repo-url>
+git clone https://github.com/ChunkyTortoise/ghl-multi-vertical-kit.git
 cd ghl-multi-vertical-kit
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -154,7 +154,7 @@ The API runs on `http://localhost:8000`.
 pytest tests/ -v
 ```
 
-87 tests covering config loading, bot engine logic, qualification tracking, API endpoints, and YAML validation.
+105 tests covering config loading, bot engine logic, qualification tracking, API endpoints, and YAML validation.
 
 ## Add a New Vertical in 5 Minutes
 
