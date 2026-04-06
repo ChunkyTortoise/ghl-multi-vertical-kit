@@ -55,6 +55,18 @@ class TestListVerticals:
         r = client.get("/verticals")
         assert "legal" in r.json()
 
+    def test_includes_dental(self, client: TestClient) -> None:
+        r = client.get("/verticals")
+        assert "dental" in r.json()
+
+    def test_includes_fitness(self, client: TestClient) -> None:
+        r = client.get("/verticals")
+        assert "fitness" in r.json()
+
+    def test_has_five_or_more_verticals(self, client: TestClient) -> None:
+        r = client.get("/verticals")
+        assert len(r.json()) >= 5
+
 
 # ---------------------------------------------------------------------------
 # /demo
@@ -214,3 +226,63 @@ class TestRealVerticals:
         from app.services.config_loader import load_vertical
         v = load_vertical("home_services")
         assert "emergency" in v.response_templates
+
+    def test_dental_loads(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("dental")
+        assert v.name == "dental"
+        assert len(v.qualification_questions) >= 5
+        assert v.booking_enabled is True
+
+    def test_dental_bot_name(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("dental")
+        assert v.persona.name == "Dana"
+
+    def test_dental_has_stop_template(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("dental")
+        assert "stop" in v.response_templates
+
+    def test_dental_system_prompt_safety_rules(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("dental")
+        prompt_lower = v.system_prompt.lower()
+        assert "diagnos" in prompt_lower or "fees" in prompt_lower
+
+    def test_fitness_loads(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("fitness")
+        assert v.name == "fitness"
+        assert len(v.qualification_questions) >= 5
+        assert v.booking_enabled is True
+
+    def test_fitness_bot_name(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("fitness")
+        assert v.persona.name == "Max"
+
+    def test_fitness_has_stop_template(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("fitness")
+        assert "stop" in v.response_templates
+
+    def test_fitness_system_prompt_safety_rules(self) -> None:
+        from app.services.config_loader import load_vertical
+        v = load_vertical("fitness")
+        prompt_lower = v.system_prompt.lower()
+        assert "injur" in prompt_lower or "medical" in prompt_lower
+
+    def test_dental_template_stop_response(self, client: TestClient) -> None:
+        r = client.post("/demo", json={"vertical": "dental", "user_message": "stop"})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["vertical"] == "dental"
+        assert data["bot_name"] == "Dana"
+
+    def test_fitness_template_stop_response(self, client: TestClient) -> None:
+        r = client.post("/demo", json={"vertical": "fitness", "user_message": "stop"})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["vertical"] == "fitness"
+        assert data["bot_name"] == "Max"

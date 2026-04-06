@@ -50,7 +50,7 @@
 
     /* ── Vertical selector ─────────────────────── */
     #vertical-selector { margin-bottom: 2rem; }
-    .vertical-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .vertical-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
 
     .vertical-card {
       background: #fff; border: 2px solid var(--border); border-radius: 12px;
@@ -338,6 +338,8 @@
     real_estate:   { icon: '&#127968;', color: '#3B82F6', label: 'Real Estate' },
     home_services: { icon: '&#128295;', color: '#F59E0B', label: 'Home Services' },
     legal:         { icon: '&#9878;&#65039;', color: '#8B5CF6', label: 'Legal' },
+    dental:        { icon: '&#129463;', color: '#10B981', label: 'Dental' },
+    fitness:       { icon: '&#127947;', color: '#EF4444', label: 'Fitness' },
   };
 
   // ─── Init ─────────────────────────────────────────────────────────────────
