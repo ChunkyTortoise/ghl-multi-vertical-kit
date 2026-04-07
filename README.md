@@ -60,6 +60,17 @@ curl -X POST http://localhost:8000/demo \
 - **GHL webhook** -- receives inbound messages, generates responses, replies via SMS
 - **One-click deploy** -- `render.yaml` blueprint provisions everything on Render
 
+## For Hiring Managers
+
+| If you're evaluating for... | Where to look | What it demonstrates |
+|-----------------------------|--------------|---------------------|
+| **System Design / Config-Driven** | YAML verticals ([`verticals/`](verticals/)), bot service ([`app/services/bot.py`](app/services/bot.py)) | Zero-code vertical swap via config, no code changes to add a new industry |
+| **AI / LLM Integration** | Claude prompt assembly, qualification tracking, disqualification detection | Production prompt engineering with structured conversation flows |
+| **CRM / Webhook Integration** | GHL client ([`app/services/ghl_client.py`](app/services/ghl_client.py)), webhook handler | Real-world third-party API integration with SMS reply pipelines |
+| **Developer Experience** | Demo UI (`/demo/ui`), `start-demo.sh`, no API keys needed for demo mode | Thoughtful DX: one command to demo, interactive browser UI, no external deps |
+
+---
+
 ## Architecture
 
 ```
